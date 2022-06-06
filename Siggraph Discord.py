@@ -4,10 +4,12 @@ from discord.ext import commands
 import datetime as dt
 import pickle
 import os.path
+import logging
 
 import constants
 
 
+logging.basicConfig(level=logging.INFO)
 
 # Resource: https://realpython.com/how-to-make-a-discord-bot-python/
 TOKEN = constants.TEST_TOKEN  # test server
