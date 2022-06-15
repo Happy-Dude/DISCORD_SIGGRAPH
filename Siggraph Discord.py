@@ -114,7 +114,7 @@ async def createFromCSV(ctx):
             topic_to_set = str(row["Topic"]) + "\n"  # +str(row["Hubb Link"])
 
         if (not isinstance(row['Category'], str)) or (len(categories[row['Category']].channels) < 50):
-            # TODO: check for empty catagories
+            # TODO: check for empty categories
             channel_id = 0
 
             if (row["Type of Channel"] == 'Text') or (pd.isnull(row["Type of Channel"])):
@@ -163,8 +163,8 @@ async def createInviteLinks(ctx, *args):
     emails["Invitation links"] = ""
     # TODO use args to parse number of emails
 
-    # TODO: set the expiration time for the link to. THis is set in seconds for max_age.
-    # They need to exprire on October 29,2021 (10/29/2021). Max age we can set is 604800 which is 7 days.
+    # TODO: set the expiration time for the link to. This is set in seconds for max_age.
+    # They need to expire on October 29,2021 (10/29/2021). Max age we can set is 604800 which is 7 days.
     # No expiration set
     seconds_to_expire = int((
         dt.datetime(year=2021, month=10, day=29)-dt.datetime.now()).total_seconds())
@@ -203,7 +203,7 @@ async def getMembers(ctx):
     # logger.info(our_guild.members)
     # members = our_guild.fetch_members()
     members = our_guild.members
-    logger.info(f"The length of memebers from the call {len(members)}")
+    logger.info(f"The length of members from the call {len(members)}")
     df = pd.DataFrame(
         columns=('Name', 'Discriminator', 'ID', 'Display Name', 'Status', "Joined on"))
     i = 0
@@ -214,13 +214,13 @@ async def getMembers(ctx):
         i = i+1
         # logger.info(member.roles)
     df.to_csv("..\Members from {}.csv".format(our_guild.name), index=False)
-    await ctx.send('Rerieved all memebers')
+    await ctx.send('Retrieved all members')
 
 # TODO: find a way to reset roles if need be
 # await remove_roles(*roles, reason=None, atomic=True)
 
 
-@bot.command(name='assign_roles', description='Assing the roles to the different members', brief='Tell who does what')
+@bot.command(name='assign_roles', description='Assign the roles to the different members', brief='Tell who does what')
 async def roleAssigned(ctx):
     if (not await checkRole(ctx)):
         return
@@ -239,7 +239,7 @@ async def roleAssigned(ctx):
 
 
 @bot.command(name='export_channels', description='export channel links, names, and categories to server', brief='export channel links to csv')
-async def exportChannles(ctx):
+async def exportChannels(ctx):
     if (not await checkRole(ctx)):
         return
     our_guild = bot.get_guild(guild_id)
@@ -280,7 +280,7 @@ async def sendAll(ctx, args):
             await channel.send(f"Announcement: {args}")
         await ctx.send("Message has been sent to everyone")
     else:
-        await ctx.send("You do have permisssions to use this command")
+        await ctx.send("You do have permissions to use this command")
 
 # !send_message channel "the message to send"
 
@@ -295,7 +295,7 @@ async def updateGuideline(ctx, *args):
 # !send_to_category "the message to send" category
 
 
-@bot.command(name='send_to_category', description="send Message to all channels in catergory example:" +
+@bot.command(name='send_to_category', description="send Message to all channels in category example:" +
              " '!send_to_category \"the message to send\" category' ", brief='megaphone to category')
 async def sendToAll(ctx, *args):
     our_guild = bot.get_guild(guild_id)
@@ -318,7 +318,7 @@ async def sendToAll(ctx, *args):
             else:
                 ctx.send(f"{category_asked} is not a valid category")
     else:
-        await ctx.send("You do have permisssions to use this command")
+        await ctx.send("You do have permissions to use this command")
 
 
 @bot.command(name='send_role_messages', description="send the role messages from the csv to assign roles", brief='messages to help assign roles')
@@ -348,14 +348,14 @@ async def sendRoleMessages(ctx):
                     message += df_temp.iloc[i]+"\n"
 
         # TODO: add bot reactions to message. Need to have an automated way to find emoji ID. So the bot can react to message
-        messaage_sent = await welcome_channel.send(message)
-        messages_to_monitor.append(messaage_sent.id)
+        message_sent = await welcome_channel.send(message)
+        messages_to_monitor.append(message_sent.id)
         for emoji_str in emojis:
             # We need to make sure if emoji in list if not we can add it.
             emoji_symbol = emoji_data.loc[emoji_data['Shortcode']
                                           == emoji_str, 'Symbol'].values[0]
             if emoji_symbol:
-                await messaage_sent.add_reaction(emoji_symbol)
+                await message_sent.add_reaction(emoji_symbol)
 
             role = emoji_data.loc[emoji_data['Shortcode']
                                   == emoji_str, 'Role'].values[0]
@@ -494,7 +494,7 @@ async def checkRole(ctx, messages=True):
             await ctx.send(f"You can not use this command")
         return False
 
-# This is to do a sniaty check on the emoji
+# This is to do a sanity check on the emoji
 
 
 @bot.command(name='test_emoji_data', hidden=True)
@@ -511,6 +511,7 @@ async def emojiData(ctx):
             message = await ctx.send(row['Symbol'])
             await message.add_reaction(row['Symbol'])
     # emoji_data.to_excel("..\Emoji Data.xlsx", index=False)
+
 # Commands don't work when this is set
 # @bot.event
 # async def on_message(message):
