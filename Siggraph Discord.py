@@ -75,8 +75,8 @@ async def purge(ctx):
     if len(channels_in_guild) > 0:
         for channel in channels_in_guild:
             logger.info(channel.name)
-            if "welcome-page" in channel.name:
-                logger.info("Skipping Welcome Page")
+            if "welcome-page" in channel.name or "botdev" in channel.name:
+                logger.info(f"Skipping {channel.name}")
             else:
                 await channel.delete()
     await ctx.send('All channels and categories are gone!!!')
