@@ -34,7 +34,7 @@ message_pickle = 'messages_test.pickle'  # Test server
 async def on_ready():
     logger.info(f"{bot.user.name} has connected to Discord!")
     logger.info(f"Logged on as {bot.user.name}!")
-    if (os.path.exists(message_pickle)):
+    if os.path.exists(message_pickle):
         with open(message_pickle, 'rb') as f:
             global messages_to_monitor
             messages_to_monitor = pickle.load(f)
@@ -44,7 +44,7 @@ async def on_ready():
 
 @bot.command(name='create_channel', description='Create text channel Channel here', brief="Let There be Channels")
 async def create_channel(ctx, *args):
-    if (not await checkRole(ctx)):
+    if not await check_role(ctx):
         return
     if len(args) > 0:
         for arg in args:
@@ -68,14 +68,14 @@ async def ping(ctx):
 
 @bot.command(name='purge', description='delete every channel here in this system', brief='DELETE EVERYTHING')
 async def purge(ctx):
-    if (not await checkRole(ctx)):
+    if not await check_role(ctx):
         return
     our_guild = ctx.guild
     channels_in_guild = await our_guild.fetch_channels()
     if len(channels_in_guild) > 0:
         for channel in channels_in_guild:
             logger.info(channel.name)
-            if ("welcome-page" in channel.name):
+            if "welcome-page" in channel.name:
                 logger.info("Skipping Welcome Page")
             else:
                 await channel.delete()
@@ -87,11 +87,11 @@ async def purge(ctx):
 
 @bot.command(name='create_from_CSV', description='create channels and categories from CSV',
              brief='starts the new world ')
-async def createFromCSV(ctx):
-    if (not await checkRole(ctx)):
+async def create_from_csv(ctx):
+    if not await check_role(ctx):
         return
-    session_file = "..\s2021_sessions_7_16.csv"  # prod csv
-    # session_file = "..\s2021_sessions_2021_6_24 - s2021_sessions_2021_6_24.csv" #test csv
+    session_file = "..\\s2021_sessions_7_16.csv"  # prod csv
+    # session_file = "..\\s2021_sessions_2021_6_24 - s2021_sessions_2021_6_24.csv" #test csv
     df = pd.read_csv(session_file)
     categories = {}
     for event_type in df["Category"].unique():
@@ -106,7 +106,7 @@ async def createFromCSV(ctx):
     for index, row in df.iterrows():
         # We can't have more than 50 channels in category
         topic_to_set = ""
-        if (pd.isnull(row["Hubb Link"])):
+        if pd.isnull(row["Hubb Link"]):
             if not pd.isnull(row["Topic"]):
                 topic_to_set = str(row["Topic"])
             else:
@@ -116,8 +116,8 @@ async def createFromCSV(ctx):
 
         if (not isinstance(row['Category'], str)) or (len(categories[row['Category']].channels) < 50):
             # TODO: check for empty categories
-            channel_id = 0
 
+            channel = None  # Set below, but avoid warning about being unset.
             if (row["Type of Channel"] == 'Text') or (pd.isnull(row["Type of Channel"])):
                 if not (pd.isnull(row["Category"])):
                     channel = await bot.guilds[0].create_text_channel(row['Reduced_sessionTitle'],
@@ -151,19 +151,19 @@ async def createFromCSV(ctx):
 
 @bot.command(name='create_links', description='create links for all the participants ex:\'!create_links 10 \' ',
              brief='create invite links ')
-async def createInviteLinks(ctx, *args):
-    if (not await checkRole(ctx)):
+async def create_invite_links(ctx, *args):
+    if not await check_role(ctx):
         return
-    email_csv = "..\Invitation_links.csv"
+    email_csv = "..\\Invitation_links.csv"
     emails = pd.DataFrame(columns=['Numbers', 'Invitation links'])
     our_guild = ctx.guild
     logger.info(our_guild)
     number_of_links = 10
     channel_to_use = 0
-    if ((len(args) > 0) and args[0].isdigit()):
+    if (len(args) > 0) and args[0].isdigit():
         logger.info(args[0])
         number_of_links = int(args[0])
-    if ((len(args) > 1) and args[1].isdigit()):
+    if (len(args) > 1) and args[1].isdigit():
         logger.info(args[1])
         channel_to_use = int(args[1])
 
@@ -182,7 +182,6 @@ async def createInviteLinks(ctx, *args):
         logger.info(row['Numbers'])
         # Expiration should be never
         # Reference: https://discordpy.readthedocs.io/en/latest/api.html?highlight=create_invite#discord.abc.GuildChannel.create_invite
-        # ASSUMPTION: The link should not expire but is allowed to be used only once . <-- THis changed and now we have 11 uses per link
         # Email is not needed
         logger.info(our_guild.channels[channel_to_use])
         invite = await our_guild.channels[channel_to_use].create_invite(max_age=0, max_uses=11)
@@ -194,16 +193,16 @@ async def createInviteLinks(ctx, *args):
 
 
 @bot.command(name='reset', description='delete everything and create again from a csv', brief='restart the world')
-async def resetWorld(ctx):
-    if (not await checkRole(ctx)):
+async def reset_world(ctx):
+    if not await check_role(ctx):
         return
     await purge(ctx)
-    await createFromCSV(ctx)
+    await create_from_csv(ctx)
 
 
 @bot.command(name='members', description='Gets you the members in the guild', brief='Who is in the server')
-async def getMembers(ctx):
-    if (not await checkRole(ctx)):
+async def get_members(ctx):
+    if not await check_role(ctx):
         return
     our_guild = ctx.guild
     # There are 16 members
@@ -222,7 +221,7 @@ async def getMembers(ctx):
                      member.display_name, member.status, member.joined_at]
         i = i + 1
         # logger.info(member.roles)
-    df.to_csv("..\Members from {}.csv".format(our_guild.name), index=False)
+    df.to_csv("..\\Members from {}.csv".format(our_guild.name), index=False)
     await ctx.send('Retrieved all members')
 
 
@@ -231,10 +230,10 @@ async def getMembers(ctx):
 
 
 @bot.command(name='assign_roles', description='Assign the roles to the different members', brief='Tell who does what')
-async def roleAssigned(ctx):
-    if (not await checkRole(ctx)):
+async def role_assigned(ctx):
+    if not await check_role(ctx):
         return
-    df = pd.read_csv("..\Role Assignment.csv")
+    df = pd.read_csv("..\\Role Assignment.csv")
     df[["Name", "delim"]] = df["User name"].str.split("#", expand=True)
     our_guild = ctx.guild
     # logger.info(our_guild.roles)
@@ -250,8 +249,8 @@ async def roleAssigned(ctx):
 
 @bot.command(name='export_channels', description='export channel links, names, and categories to server',
              brief='export channel links to csv')
-async def exportChannels(ctx):
-    if (not await checkRole(ctx)):
+async def export_channels(ctx):
+    if not await check_role(ctx):
         return
     our_guild = ctx.guild
     channels_in_guild = await our_guild.fetch_channels()
@@ -264,14 +263,14 @@ async def exportChannels(ctx):
             df.loc[i] = [channel.name, channel.category, channel.type, link]
 
     await ctx.send('All channels links have been found!')
-    df.to_csv("..\Channel info from {}.csv".format(
+    df.to_csv("..\\Channel info from {}.csv".format(
         our_guild.name), index=False)
     await ctx.send("dumped to 'Channel info from {}.csv'".format(our_guild.name))
 
 
 @bot.command(name='help_moderator', description='Send help to the support channel',
              brief='ask for help in the support channel')
-async def askForHelp(ctx, args):
+async def ask_for_help(ctx, args):
     our_guild = ctx.guild
     support_channel = discord.utils.get(
         our_guild.channels, name="moderators-hidden")
@@ -280,13 +279,12 @@ async def askForHelp(ctx, args):
 
 
 @bot.command(name='send_all', description='send Message to all channels', brief='megaphone to everyone')
-async def sendAll(ctx, args):
+async def send_all(ctx, args):
     our_guild = ctx.guild
-    members = our_guild.members
     role_needed = discord.utils.get(our_guild.roles, name="SIGGRAPH_Chair")
     member_in_question = discord.utils.get(
         our_guild.members, name=ctx.message.author.name)
-    if (role_needed in member_in_question.roles):
+    if role_needed in member_in_question.roles:
         await ctx.send(f"You do have the permissions to send {args}")
         for channel in our_guild.text_channels:
             await channel.send(f"Announcement: {args}")
@@ -299,7 +297,7 @@ async def sendAll(ctx, args):
 
 
 @bot.command(name='send_message', description="Updates the guidelines message", brief='Guidelines message')
-async def updateGuideline(ctx, *args):
+async def update_guideline(ctx, *args):
     our_guild = ctx.guild
     channel = discord.utils.get(
         our_guild.channels, name=args[0])
@@ -312,13 +310,12 @@ async def updateGuideline(ctx, *args):
 @bot.command(name='send_to_category', description="send Message to all channels in category example:" +
                                                   " '!send_to_category \"the message to send\" category' ",
              brief='megaphone to category')
-async def sendToAll(ctx, *args):
+async def send_to_category(ctx, *args):
     our_guild = ctx.guild
-    members = our_guild.members
     role_needed = discord.utils.get(our_guild.roles, name="SIGGRAPH_Chair")
     member_in_question = discord.utils.get(
         our_guild.members, name=ctx.message.author.name)
-    if (role_needed in member_in_question.roles):
+    if role_needed in member_in_question.roles:
         await ctx.send(f"You do have the permissions to send {args[0]}")
         await ctx.send(f"{args[0]}")
         await ctx.send(f"{args[1]}")
@@ -338,12 +335,12 @@ async def sendToAll(ctx, *args):
 
 @bot.command(name='send_role_messages', description="send the role messages from the csv to assign roles",
              brief='messages to help assign roles')
-async def sendRoleMessages(ctx):
-    if (not await checkRole(ctx)):
+async def send_role_messages(ctx):
+    if not await check_role(ctx):
         return
     our_guild = ctx.guild
-    df = pd.read_csv("..\Channels, Categories, and Roles - Roles.csv")
-    emoji_data = pd.read_excel("..\Emoji Data.xlsx")
+    df = pd.read_csv("..\\Channels, Categories, and Roles - Roles.csv")
+    emoji_data = pd.read_excel("..\\Emoji Data.xlsx")
 
     welcome_channel = discord.utils.get(
         our_guild.channels, name="welcome-page")
@@ -376,7 +373,7 @@ async def sendRoleMessages(ctx):
             role = emoji_data.loc[emoji_data['Shortcode']
                                   == emoji_str, 'Role'].values[0]
             if role:
-                await createRole(ctx, role, messages=False)
+                await create_role(ctx, role, messages=False)
     global message_pickle
     with open(message_pickle, 'wb') as f:
         pickle.dump(messages_to_monitor, f)
@@ -385,14 +382,14 @@ async def sendRoleMessages(ctx):
 
 @bot.command(name='edit_role_messages', description="edit the role messages that were already sent",
              brief='edit the message to help assign roles')
-async def editRoleMessages(ctx):
-    if (not await checkRole(ctx)):
+async def edit_role_messages(ctx):
+    if not await check_role(ctx):
         return
     our_guild = ctx.guild
     welcome_channel = discord.utils.get(
         our_guild.channels, name="welcome-page")
-    df = pd.read_csv("..\Channels, Categories, and Roles - Roles.csv")
-    emoji_data = pd.read_excel("..\Emoji Data.xlsx")
+    df = pd.read_csv("..\\Channels, Categories, and Roles - Roles.csv")
+    emoji_data = pd.read_excel("..\\Emoji Data.xlsx")
 
     for column in df.columns:
         message_tosend = ""
@@ -429,7 +426,7 @@ async def editRoleMessages(ctx):
             role = emoji_data.loc[emoji_data['Shortcode']
                                   == emoji_str, 'Role'].values[0]
             if role:
-                await createRole(ctx, role, messages=False)
+                await create_role(ctx, role, messages=False)
     await ctx.send("Messages have been edited")
 
 
@@ -442,7 +439,7 @@ async def on_raw_reaction_add(payload):
         logger.info(payload.emoji)
         member = discord.utils.get(
             our_guild.members, id=payload.user_id)
-        emoji_data = pd.read_excel("..\Emoji Data.xlsx")
+        emoji_data = pd.read_excel("..\\Emoji Data.xlsx")
         if payload.emoji.name not in emoji_data['Symbol'].unique():
             logger.info(f"{payload.emoji.name} is not in our list")
             return
@@ -462,7 +459,7 @@ async def on_raw_reaction_remove(payload):
         logger.info(payload.emoji)
         member = discord.utils.get(
             our_guild.members, id=payload.user_id)
-        emoji_data = pd.read_excel("..\Emoji Data.xlsx")
+        emoji_data = pd.read_excel("..\\Emoji Data.xlsx")
         if payload.emoji.name not in emoji_data['Symbol'].unique():
             logger.info(f"{payload.emoji.name} is not in our list")
             return
@@ -476,14 +473,14 @@ async def on_raw_reaction_remove(payload):
 
 @bot.command(name='create_role', description="creates a role '!create_role role_name1 role_name2'",
              brief='creates a role through command')
-async def createRole(ctx, *args, messages=True):
+async def create_role(ctx, *args, messages=True):
     our_guild = ctx.guild
-    if (not await checkRole(ctx, messages)):
+    if not await check_role(ctx, messages):
         return
     if len(args) > 0:
         for arg in args:
             arg = arg.strip()
-            if discord.utils.get(our_guild.roles, name=arg) == None:
+            if discord.utils.get(our_guild.roles, name=arg) is None:
                 await our_guild.create_role(name=arg)
                 if messages:
                     await ctx.send(f"Created role {arg}")
@@ -492,7 +489,7 @@ async def createRole(ctx, *args, messages=True):
                     await ctx.send(f"The role {arg} is already implemented")
 
 
-async def checkRole(ctx, messages=True):
+async def check_role(ctx, messages=True):
     # Might check for a bunch of roles to see if they work
     # Admin
     roles = ["SIGGRAPH_Chair", "Admin"]
@@ -503,7 +500,7 @@ async def checkRole(ctx, messages=True):
     member_in_question = discord.utils.get(
         our_guild.members, name=ctx.message.author.name)
     # If there is role in the array that fits. we can use the command
-    if (set(roles_needed) & set(member_in_question.roles)):
+    if set(roles_needed) & set(member_in_question.roles):
         if messages:
             await ctx.send(f"You do have the permissions to use this command")
         return True
@@ -517,11 +514,10 @@ async def checkRole(ctx, messages=True):
 
 
 @bot.command(name='test_emoji_data', hidden=True)
-async def emojiData(ctx):
-    our_guild = ctx.guild
-    emoji_data = pd.read_excel("..\Emoji Data.xlsx")
+async def check_emoji_data(ctx):
+    emoji_data = pd.read_excel("..\\Emoji Data.xlsx")
     for index, row in emoji_data.iterrows():
-        if (":" in row['Symbol']):
+        if ":" in row['Symbol']:
             # emoji = bot.get_emoji(row["Discord_ID"])
             # message = await ctx.send(row['Shortcode'])
             # await message.add_reaction("<"+row['Shortcode']+row["Discord_ID"]+">")
