@@ -8,8 +8,12 @@ import logging
 
 import constants
 
+# https://stackoverflow.com/a/44401529
+logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+    datefmt='%Y-%m-%d:%H:%M:%S',
+    level=logging.INFO)
 
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Resource: https://realpython.com/how-to-make-a-discord-bot-python/
 TOKEN = constants.TEST_TOKEN  # test server
@@ -29,8 +33,8 @@ message_pickle = 'messages_test.pickle'  # Test server
 
 @bot.event
 async def on_ready():
-    print(f'{bot.user.name} has connected to Discord!')
-    print('Logged on as {0}!'.format(bot.user.name))
+    logger.info(f"{bot.user.name} has connected to Discord!")
+    logger.info(f"Logged on as {bot.user.name}!")
     global guild_id
     guild_id = bot.guilds[0].id
     if(os.path.exists(message_pickle)):
@@ -71,9 +75,9 @@ async def purge(ctx):
     channels_in_guild = await our_guild.fetch_channels()
     if len(channels_in_guild) > 0:
         for channel in channels_in_guild:
-            print(channel.name)
+            logger.info(channel.name)
             if ("welcome-page" in channel.name):
-                print("Skipping Welcome Page")
+                logger.info("Skipping Welcome Page")
             else:
                 await channel.delete()
     await ctx.send('All channels and categories are gone!!!')
@@ -149,10 +153,10 @@ async def createInviteLinks(ctx, *args):
     number_of_links = 10
     channel_to_use = 0
     if ((len(args) > 0) and args[0].isdigit()):
-        print(args[0])
+        logger.info(args[0])
         number_of_links = int(args[0])
     if ((len(args) > 1) and args[1].isdigit()):
-        print(args[1])
+        logger.info(args[1])
         channel_to_use = int(args[1])
 
     emails["Numbers"] = pd.Series(range(1, number_of_links+1))
@@ -164,18 +168,19 @@ async def createInviteLinks(ctx, *args):
     # No expiration set
     seconds_to_expire = int((
         dt.datetime(year=2021, month=10, day=29)-dt.datetime.now()).total_seconds())
-    print("Links will expire in ", seconds_to_expire, " seconds.")
+    logger.info(f"Links will expire in {seconds_to_expire} seconds.")
+    logger.info(our_guild.channels)
     for index, row in emails.iterrows():
-        print(row['Numbers'])
+        logger.info(row['Numbers'])
         # Expiration should be never
         # Reference: https://discordpy.readthedocs.io/en/latest/api.html?highlight=create_invite#discord.abc.GuildChannel.create_invite
         # ASSUMPTION: The link should not expire but is allowed to be used only once . <-- THis changed and now we have 11 uses per link
         # Email is not needed
-        print(our_guild.channels[channel_to_use])
+        logger.info(our_guild.channels[channel_to_use])
         invite = await our_guild.channels[channel_to_use].create_invite(max_age=0, max_uses=11)
 
         emails.at[index, "Invitation links"] = invite.url
-        # print(invite.url)
+        logger.info(invite.url)
     emails.to_csv(email_csv, index=False)
     await ctx.send('Invitation links were created!')
 
@@ -194,21 +199,20 @@ async def getMembers(ctx):
         return
     our_guild = bot.get_guild(guild_id)
     # There are 16 members
-    print("How many members are in this server", our_guild.member_count)
-    # print(our_guild.members)
+    logger.info(f"How many members are in this server {our_guild.member_count}")
+    # logger.info(our_guild.members)
     # members = our_guild.fetch_members()
     members = our_guild.members
-    print("The length of memebers from the call", len(members))
+    logger.info(f"The length of memebers from the call {len(members)}")
     df = pd.DataFrame(
         columns=('Name', 'Discriminator', 'ID', 'Display Name', 'Status', "Joined on"))
     i = 0
     for member in members:
-        print(member.name, member.discriminator, member.id, member.display_name,
-              member.status, member.joined_at)
+        logger.info(f"{member.name}, {member.discriminator}, {member.id}, {member.display_name}, {member.status}, {member.joined_at}")
         df.loc[i] = [member.name, member.discriminator, member.id,
                      member.display_name, member.status, member.joined_at]
         i = i+1
-        # print(member.roles)
+        # logger.info(member.roles)
     df.to_csv("..\Members from {}.csv".format(our_guild.name), index=False)
     await ctx.send('Rerieved all memebers')
 
@@ -223,7 +227,7 @@ async def roleAssigned(ctx):
     df = pd.read_csv("..\Role Assignment.csv")
     df[["Name", "delim"]] = df["User name"].str.split("#", expand=True)
     our_guild = bot.get_guild(guild_id)
-    # print(our_guild.roles)
+    # logger.info(our_guild.roles)
     for index, row in df.iterrows():
         role = discord.utils.get(our_guild.roles, name=row["Role"])
         member = discord.utils.get(
@@ -243,7 +247,7 @@ async def exportChannles(ctx):
     df = pd.DataFrame(columns=('Channel Name', 'Category', 'Type', 'link'))
     if len(channels_in_guild) > 0:
         for i, channel in enumerate(channels_in_guild):
-            print(channel.name, channel.category, channel.type, channel.id)
+            logger.info(f"{channel.name}, {channel.category}, {channel.type}, {channel.id}")
             link = "https://discord.com/channels/{0}/{1}".format(
                 guild_id, channel.id)
             df.loc[i] = [channel.name, channel.category, channel.type, link]
@@ -388,9 +392,9 @@ async def editRoleMessages(ctx):
                     message_tosend += df_temp.iloc[i]+"\n"
         message = None
         for message_id in messages_to_monitor:
-            # print(message_id)
+            # logger.info(message_id)
             message = await welcome_channel.fetch_message(message_id)
-            # print(message.content)
+            # logger.info(message.content)
             if message.content[:85] in message_tosend:
                 break
         if message_tosend == message.content:
@@ -417,13 +421,13 @@ async def on_raw_reaction_add(payload):
     our_guild = bot.get_guild(guild_id)
     message_id = payload.message_id
     if message_id in messages_to_monitor:
-        print("We just reacted to the message we want")
-        print(payload.emoji)
+        logger.info("We just reacted to the message we want")
+        logger.info(payload.emoji)
         member = discord.utils.get(
             our_guild.members, id=payload.user_id)
         emoji_data = pd.read_excel("..\Emoji Data.xlsx")
         if payload.emoji.name not in emoji_data['Symbol'].unique():
-            print(payload.emoji.name +" is not in our list")
+            logger.info(f"{payload.emoji.name} is not in our list")
             return
         role_name = emoji_data.loc[emoji_data['Symbol']
                                    == payload.emoji.name, 'Role'].values[0]
@@ -437,20 +441,20 @@ async def on_raw_reaction_remove(payload):
     our_guild = bot.get_guild(guild_id)
     message_id = payload.message_id
     if message_id in messages_to_monitor:
-        print("We just removed a message we want")
-        print(payload.emoji)
+        logger.info("We just removed a message we want")
+        logger.info(payload.emoji)
         member = discord.utils.get(
             our_guild.members, id=payload.user_id)
         emoji_data = pd.read_excel("..\Emoji Data.xlsx")
         if payload.emoji.name not in emoji_data['Symbol'].unique():
-            print(payload.emoji.name +" is not in our list")
+            logger.info(f"{payload.emoji.name} is not in our list")
             return
         role_name = emoji_data.loc[emoji_data['Symbol']
                                    == payload.emoji.name, 'Role'].values[0]
         role_to_remove = discord.utils.get(our_guild.roles, name=role_name)
         if member and role_to_remove:
             await member.remove_roles(role_to_remove)
-        print(payload.emoji)
+        logger.info(payload.emoji)
 
 
 @bot.command(name='create_role', description="creates a role '!create_role role_name1 role_name2'", brief='creates a role through command')
@@ -510,5 +514,6 @@ async def emojiData(ctx):
 # Commands don't work when this is set
 # @bot.event
 # async def on_message(message):
-#     print('Message from {0.author}: {0.content}'.format(message))
+#     logger.info(f"Message from {message.author}: {message.content}")
+
 bot.run(TOKEN)
