@@ -90,8 +90,7 @@ async def purge(ctx):
 async def create_from_csv(ctx):
     if not await check_role(ctx):
         return
-    session_file = "..\\s2021_sessions_7_16.csv"  # prod csv
-    # session_file = "..\\s2021_sessions_2021_6_24 - s2021_sessions_2021_6_24.csv" #test csv
+    session_file = f"..\\{ctx.guild.name}\\s2021_sessions_2021_6_24 - s2021_sessions_2021_6_24.csv"
     df = pd.read_csv(session_file)
     categories = {}
     for event_type in df["Category"].unique():
@@ -154,7 +153,7 @@ async def create_from_csv(ctx):
 async def create_invite_links(ctx, *args):
     if not await check_role(ctx):
         return
-    email_csv = "..\\Invitation_links.csv"
+    email_csv = f"..\\{ctx.guild.name}\\Invitation_links.csv"
     emails = pd.DataFrame(columns=['Numbers', 'Invitation links'])
     our_guild = ctx.guild
     logger.info(our_guild)
@@ -233,7 +232,7 @@ async def get_members(ctx):
 async def role_assigned(ctx):
     if not await check_role(ctx):
         return
-    df = pd.read_csv("..\\Role Assignment.csv")
+    df = pd.read_csv(f"..\\{ctx.guild.name}\\Role Assignment.csv")
     df[["Name", "delim"]] = df["User name"].str.split("#", expand=True)
     our_guild = ctx.guild
     # logger.info(our_guild.roles)
@@ -339,8 +338,8 @@ async def send_role_messages(ctx):
     if not await check_role(ctx):
         return
     our_guild = ctx.guild
-    df = pd.read_csv("..\\Channels, Categories, and Roles - Roles.csv")
-    emoji_data = pd.read_excel("..\\Emoji Data.xlsx")
+    df = pd.read_csv(f"..\\{ctx.guild.name}\\Channels, Categories, and Roles - Roles.csv")
+    emoji_data = pd.read_excel(f"..\\{ctx.guild.name}\\Emoji Data.xlsx")
 
     welcome_channel = discord.utils.get(
         our_guild.channels, name="welcome-page")
@@ -388,8 +387,8 @@ async def edit_role_messages(ctx):
     our_guild = ctx.guild
     welcome_channel = discord.utils.get(
         our_guild.channels, name="welcome-page")
-    df = pd.read_csv("..\\Channels, Categories, and Roles - Roles.csv")
-    emoji_data = pd.read_excel("..\\Emoji Data.xlsx")
+    df = pd.read_csv("..\\{ctx.guild.name}\\Channels, Categories, and Roles - Roles.csv")
+    emoji_data = pd.read_excel(f"..\\{ctx.guild.name}\\Emoji Data.xlsx")
 
     for column in df.columns:
         message_tosend = ""
@@ -439,7 +438,7 @@ async def on_raw_reaction_add(payload):
         logger.info(payload.emoji)
         member = discord.utils.get(
             our_guild.members, id=payload.user_id)
-        emoji_data = pd.read_excel("..\\Emoji Data.xlsx")
+        emoji_data = pd.read_excel(f"..\\{our_guild.name}\\Emoji Data.xlsx")
         if payload.emoji.name not in emoji_data['Symbol'].unique():
             logger.info(f"{payload.emoji.name} is not in our list")
             return
@@ -459,7 +458,7 @@ async def on_raw_reaction_remove(payload):
         logger.info(payload.emoji)
         member = discord.utils.get(
             our_guild.members, id=payload.user_id)
-        emoji_data = pd.read_excel("..\\Emoji Data.xlsx")
+        emoji_data = pd.read_excel(f"..\\{our_guild.name}\\Emoji Data.xlsx")
         if payload.emoji.name not in emoji_data['Symbol'].unique():
             logger.info(f"{payload.emoji.name} is not in our list")
             return
@@ -514,8 +513,8 @@ async def check_role(ctx, messages=True):
 
 
 @bot.command(name='test_emoji_data', hidden=True)
-async def check_emoji_data(ctx):
-    emoji_data = pd.read_excel("..\\Emoji Data.xlsx")
+async def test_emoji_data(ctx):
+    emoji_data = pd.read_excel(f"..\\{ctx.guild.name}\\Emoji Data.xlsx")
     for index, row in emoji_data.iterrows():
         if ":" in row['Symbol']:
             # emoji = bot.get_emoji(row["Discord_ID"])
