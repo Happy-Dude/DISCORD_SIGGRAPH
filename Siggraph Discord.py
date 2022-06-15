@@ -85,7 +85,7 @@ async def purge(ctx):
 # Read from CSV
 
 
-@bot.command(name='create_from_CSV', description='create channels and categories from CSV',
+@bot.command(name='create_from_csv', description='create channels and categories from CSV',
              brief='starts the new world ')
 async def create_from_csv(ctx):
     if not await check_role(ctx):
