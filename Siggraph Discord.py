@@ -48,10 +48,10 @@ async def create_channel(ctx, *args):
         return
     if len(args) > 0:
         for arg in args:
-            await bot.guilds[0].create_text_channel(arg)
+            await ctx.guild.create_text_channel(arg)
             await ctx.send('Created Channel named {}'.format(arg))
     else:
-        await bot.guilds[0].create_text_channel("Empty Channel")
+        await ctx.guild.create_text_channel("Empty Channel")
 
 
 @bot.command(name='ping', description='The Classic Ping Pong example', brief='PING PONG')
@@ -95,7 +95,7 @@ async def create_from_csv(ctx):
     categories = {}
     for event_type in df["Category"].unique():
         if isinstance(event_type, str):
-            category = await bot.guilds[0].create_category(event_type)
+            category = await ctx.guild.create_category(event_type)
             categories[event_type] = category
     await ctx.send('created all the categories!')
 
@@ -119,27 +119,27 @@ async def create_from_csv(ctx):
             channel = None  # Set below, but avoid warning about being unset.
             if (row["Type of Channel"] == 'Text') or (pd.isnull(row["Type of Channel"])):
                 if not (pd.isnull(row["Category"])):
-                    channel = await bot.guilds[0].create_text_channel(row['Reduced_sessionTitle'],
+                    channel = await ctx.guild.create_text_channel(row['Reduced_sessionTitle'],
                                                                       category=categories[row['Category']],
                                                                       topic=topic_to_set)
                 else:
-                    channel = await bot.guilds[0].create_text_channel(row['Reduced_sessionTitle'], topic=topic_to_set)
+                    channel = await ctx.guild.create_text_channel(row['Reduced_sessionTitle'], topic=topic_to_set)
                 botmsg = await channel.send(topic_to_set)
                 await botmsg.pin()
             elif row["Type of Channel"] == 'Voice':
                 if isinstance(row['Category'], str):
-                    channel = await bot.guilds[0].create_voice_channel(row['Reduced_sessionTitle'],
+                    channel = await ctx.guild.create_voice_channel(row['Reduced_sessionTitle'],
                                                                        category=categories[row['Category']])
                 else:
-                    channel = await bot.guilds[0].create_voice_channel(row['Reduced_sessionTitle'])
+                    channel = await ctx.guild.create_voice_channel(row['Reduced_sessionTitle'])
             elif row["Type of Channel"] == 'Stage':
                 # Stage channels are only available to community servers
                 if isinstance(row['Category'], str):
-                    channel = await bot.guilds[0].create_text_channel(row['Reduced_sessionTitle'],
+                    channel = await ctx.guild.create_text_channel(row['Reduced_sessionTitle'],
                                                                       category=categories[row['Category']],
                                                                       topic=topic_to_set)
                 else:
-                    channel = await bot.guilds[0].create_text_channel(row['Reduced_sessionTitle'], topic=topic_to_set)
+                    channel = await ctx.guild.create_text_channel(row['Reduced_sessionTitle'], topic=topic_to_set)
 
             channel_id = channel.id
             row["Channel Link"] = "https://discord.com/channels/{0}/{1}".format(
