@@ -292,11 +292,13 @@ async def send_all(ctx, args):
         await ctx.send("You do have permissions to use this command")
 
 
-# !send_message channel "the message to send"
+# !send_to_channel channel "the message to send"
 
 
-@bot.command(name='send_message', description="Updates the guidelines message", brief='Guidelines message')
-async def update_guideline(ctx, *args):
+@bot.command(name='send_to_channel', description="Send a message to a specific channel", brief='Send to channel')
+async def send_to_channel(ctx, *args):
+    if not await check_role(ctx):
+        return
     our_guild = ctx.guild
     channel = discord.utils.get(
         our_guild.channels, name=args[0])
